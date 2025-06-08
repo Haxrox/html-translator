@@ -1,5 +1,3 @@
-from bs4 import BeautifulSoup, NavigableString
-import opencc
 import sys
 import os
 import glob
@@ -7,7 +5,10 @@ import logging
 import traceback
 import time
 
+from bs4 import BeautifulSoup, NavigableString
 from dotenv import load_dotenv
+from google.cloud import translate_v2
+import opencc
 
 load_dotenv()
 
@@ -23,6 +24,12 @@ logger = logging.getLogger(__name__)
 streamHandler = logging.StreamHandler(sys.stdout)
 streamHandler.setLevel(logging.INFO)
 
+def translate_text(text : str) -> str:
+  """Translate text from Simplified Chinese to Traditional Chinese."""
+  client = translate_v2.Client()
+  result = client.translate(text, source_language = 'zh-CN', target_language='zh-TW')
+  return result['translatedText']
+
 def convert_html(file : str, encoding: str = INPUT_ENCODING):
   with open(file, encoding = encoding, errors = "ignore") as fp:
     converter = opencc.OpenCC('s2t.json')
@@ -36,7 +43,9 @@ def convert_html(file : str, encoding: str = INPUT_ENCODING):
           continue
 
       converted = converter.convert(original)
+      google_converted = translate_text(original)
       logger.debug(f"{original} -> {converted}")
+      logger.debug(f"{original} -> {google_converted}")
 
       node.replace_with(converted)
       # if type(node) is not NavigableString:
