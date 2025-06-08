@@ -6,6 +6,7 @@ import glob
 import logging
 import traceback
 import time
+import shutil
 
 from dotenv import load_dotenv
 
@@ -85,8 +86,7 @@ if __name__ == "__main__":
   logger.debug(f"INPUT_ENCODING: {INPUT_ENCODING}")
   logger.debug(f"OUTPUT_ENCODING: {OUTPUT_ENCODING}")
 
-  # input_files = glob.glob(os.path.join(INPUT_DIR, "*/*/*.htm"), recursive=True)
-  input_files = glob.glob(os.path.join(INPUT_DIR, "001/make/*.htm"), recursive=True)
+  input_files = glob.glob(os.path.join(INPUT_DIR, "*/*/*"), recursive=True)
 
   if not input_files:
     logger.error("No input files found in the input directory.")
@@ -95,7 +95,14 @@ if __name__ == "__main__":
   for file in input_files:
     logger.info(f"Processing file: {file}")
     try:
-      convert_html(file)
+      if file.endswith(".htm") or file.endswith(".html"):
+        # Convert the HTML file
+        convert_html(file)
+      else:
+        # Copy file
+        logger.info(f"Copying non-HTML file: {file}")
+        output_file = file.replace(INPUT_DIR, OUTPUT_DIR)
+        shutil.copy(file, output_file)
     except Exception as e:
       logger.error(f"Error processing {file}: {e}")
       logger.debug(f"{traceback.format_exc()}")
